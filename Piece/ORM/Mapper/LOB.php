@@ -144,6 +144,12 @@ class Piece_ORM_Mapper_LOB
      */
     function load()
     {
+        if ($this->_dbh->phptype == 'pgsql'
+            && $this->_metadata->getNativeDatatype($this->_fieldName) == 'oid'
+            ) {
+            return $this->_loadOID();
+        }
+
         PEAR::staticPushErrorHandling(PEAR_ERROR_RETURN);
         $datatype = &$this->_dbh->loadModule('Datatype');
         PEAR::staticPopErrorHandling();
@@ -182,26 +188,6 @@ class Piece_ORM_Mapper_LOB
 
         $datatype->destroyLOB($lob);
 
-        if ($this->_dbh->phptype == 'pgsql'
-            && $this->_metadata->getNativeDatatype($this->_fieldName) == 'oid'
-            ) {
-            $this->_dbh->beginTransaction();
-            $handle = pg_lo_open($this->_dbh->connection,
-                                 $this->_value,
-                                 "r"
-                                 );
-            $data = '';
-            while (true) {
-                $result = pg_lo_read($handle, 8192);
-                if (!$result) {
-                    break;
-                }
-                $data .= $result;
-            }
-            pg_lo_close($handle);
-            $this->_dbh->commit();
-        }
-
         return $data;
     }
 
@@ -223,6 +209,32 @@ class Piece_ORM_Mapper_LOB
     /**#@+
      * @access private
      */
+
+    /**
+     * Loads the LOB data of PostgreSQL OID.
+     *
+     * @return string
+     */
+    function _loadOID()
+    {
+        $this->_dbh->beginTransaction();
+        $handle = pg_lo_open($this->_dbh->connection,
+                             $this->_value,
+                             "r"
+                             );
+        $data = '';
+        while (true) {
+            $result = pg_lo_read($handle, 8192);
+            if (!$result) {
+                break;
+            }
+            $data .= $result;
+        }
+        pg_lo_close($handle);
+        $this->_dbh->commit();
+
+        return $data;
+    }
 
     /**#@-*/
 
