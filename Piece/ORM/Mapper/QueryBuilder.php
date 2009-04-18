@@ -341,7 +341,7 @@ class Piece_ORM_Mapper_QueryBuilder
                 if ($dbh->phptype == 'pgsql'
                     && $nativeTypes[$placeHolderField] == 'oid'
                     ) {
-                    $value = $this->_importSource($placeHolderField);
+                    $value = $this->_importSource($placeHolderProperty);
                     break;
                 }
 
