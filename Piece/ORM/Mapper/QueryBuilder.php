@@ -346,11 +346,11 @@ class Piece_ORM_Mapper_QueryBuilder
                         $source = $matches[1];
                     }
 
-                    pg_query($dbh->connection, 'begin');
+                    $dbh->beginTransaction();
                     $value = pg_lo_import($dbh->connection,
                                           $source
                                           );
-                    pg_query($dbh->connection, 'commit');
+                    $dbh->commit();
                     break;
                 }
 

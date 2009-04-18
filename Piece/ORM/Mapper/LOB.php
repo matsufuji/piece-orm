@@ -185,7 +185,7 @@ class Piece_ORM_Mapper_LOB
         if ($this->_dbh->phptype == 'pgsql'
             && $this->_metadata->getNativeDatatype($this->_fieldName) == 'oid'
             ) {
-            pg_query($this->_dbh->connection, 'begin');
+            $this->_dbh->beginTransaction();
             $handle = pg_lo_open($this->_dbh->connection,
                                  $this->_value,
                                  "r"
@@ -199,7 +199,7 @@ class Piece_ORM_Mapper_LOB
                 $data .= $result;
             }
             pg_lo_close($handle);
-            pg_query($this->_dbh->connection, 'commit');
+            $this->_dbh->commit();
         }
 
         return $data;
