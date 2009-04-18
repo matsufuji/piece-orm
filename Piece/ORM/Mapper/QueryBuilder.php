@@ -289,9 +289,12 @@ class Piece_ORM_Mapper_QueryBuilder
     function _buildPreparedStatement($query, $placeHolderFields)
     {
         $types = array();
+        $nativeTypes = array();
         foreach ($placeHolderFields as $placeHolderField) {
             $types[$placeHolderField] =
                 $this->_metadata->getDatatype($placeHolderField);
+            $nativeTypes[$placeHolderField] =
+                $this->_metadata->_tableInfo[$placeHolderField]['nativetype'];
         }
 
         $dbh = &$this->_mapper->getConnection();
@@ -332,6 +335,22 @@ class Piece_ORM_Mapper_QueryBuilder
 
                 if (strtolower(get_class($this->_criteria->$placeHolderProperty)) != strtolower('Piece_ORM_Mapper_LOB')) {
                     $value = null;
+                    break;
+                }
+
+                if ($dbh->phptype == 'pgsql'
+                    && $nativeTypes[$placeHolderField] == 'oid'
+                    ) {
+                    $source = $this->_criteria->$placeHolderProperty->getSource();
+                    if (preg_match('/^[a-z0-9]+:\/\/(.+)/i', $source, $matches)) {
+                        $source = $matches[1];
+                    }
+
+                    pg_query($dbh->connection, 'begin');
+                    $value = pg_lo_import($dbh->connection,
+                                          $source
+                                          );
+                    pg_query($dbh->connection, 'commit');
                     break;
                 }
 
