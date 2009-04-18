@@ -294,7 +294,7 @@ class Piece_ORM_Mapper_QueryBuilder
             $types[$placeHolderField] =
                 $this->_metadata->getDatatype($placeHolderField);
             $nativeTypes[$placeHolderField] =
-                $this->_metadata->_tableInfo[$placeHolderField]['nativetype'];
+                $this->_metadata->getNativeDatatype($placeHolderField);
         }
 
         $dbh = &$this->_mapper->getConnection();

@@ -353,6 +353,22 @@ class Piece_ORM_Metadata
         return $this->_aliases[$alias];
     }
 
+    /**
+     * Gets the native datatype for a given field name.
+     *
+     * @param string $fieldName
+     * @return string
+     * @since Method available since Release 1.3.0
+     */
+    function getNativeDatatype($fieldName)
+    {
+        if (!$this->hasField($fieldName)) {
+            return;
+        }
+
+        return $this->_tableInfo[$fieldName]['nativetype'];
+    }
+
     /**#@-*/
 
     /**#@+

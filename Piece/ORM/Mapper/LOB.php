@@ -183,7 +183,7 @@ class Piece_ORM_Mapper_LOB
         $datatype->destroyLOB($lob);
 
         if ($this->_dbh->phptype == 'pgsql'
-            && $this->_metadata->_tableInfo[$this->_fieldName]['nativetype'] == 'oid'
+            && $this->_metadata->getNativeDatatype($this->_fieldName) == 'oid'
             ) {
             pg_query($this->_dbh->connection, 'begin');
             $handle = pg_lo_open($this->_dbh->connection,
