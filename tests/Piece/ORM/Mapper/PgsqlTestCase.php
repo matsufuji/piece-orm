@@ -149,6 +149,37 @@ class Piece_ORM_Mapper_PgsqlTestCase extends Piece_ORM_Mapper_CompatibilityTests
         $this->assertEquals('0', $mapper->getDefault('lockVersion'));
     }
 
+    /**
+     * @since Method available since Release 1.3.0
+     */
+    function testShouldSupportOid()
+    {
+        $jpegPath = "{$this->_cacheDirectory}/picture.jpg";
+        $pngPath = "{$this->_cacheDirectory}/picture.png";
+
+        $this->_tables[] = 'oid_type';
+        $this->_cacheDirectory = dirname(__FILE__) . '/' . basename(__FILE__, '.php');
+        Piece_ORM_Mapper_Factory::setConfigDirectory($this->_cacheDirectory);
+        Piece_ORM_Mapper_Factory::setCacheDirectory($this->_cacheDirectory);
+        Piece_ORM_Metadata_Factory::setCacheDirectory($this->_cacheDirectory);
+        $mapper = &Piece_ORM_Mapper_Factory::factory('OidType');
+        $subject = &$mapper->createObject();
+        $subject->name = 'Foo';
+        $subject->picture = &$mapper->createLOB("file://$jpegPath");
+        $id = $mapper->insert($subject);
+        $file1 = &$mapper->findById($id);
+
+        $this->assertEquals(strtolower('Piece_ORM_Mapper_LOB'), strtolower(get_class($file1->picture)));
+        $this->assertEquals(file_get_contents($jpegPath), $file1->picture->load());
+
+        $file1->picture->setSource("file://$pngPath");
+        $mapper->update($file1);
+        $file2 = &$mapper->findById($id);
+
+        $this->assertTrue(file_get_contents($jpegPath) != $file2->picture->load());
+        $this->assertEquals(file_get_contents($pngPath), $file2->picture->load());
+    }
+
     /**#@-*/
 
     /**#@+
