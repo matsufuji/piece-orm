@@ -180,6 +180,34 @@ class Piece_ORM_Mapper_PgsqlTestCase extends Piece_ORM_Mapper_CompatibilityTests
         $this->assertEquals(file_get_contents($pngPath), $file2->picture->load());
     }
 
+    /**
+     * @since Method available since Release 1.3.0
+     */
+    function testThrowExceptionIfFileIsNotExists()
+    {
+        $jpegPath = "{$this->_cacheDirectory}/nothing.jpg";
+
+        $this->_tables[] = 'oid_type';
+        $this->_cacheDirectory = dirname(__FILE__) . '/' . basename(__FILE__, '.php');
+        Piece_ORM_Mapper_Factory::setConfigDirectory($this->_cacheDirectory);
+        Piece_ORM_Mapper_Factory::setCacheDirectory($this->_cacheDirectory);
+        Piece_ORM_Metadata_Factory::setCacheDirectory($this->_cacheDirectory);
+        $mapper = &Piece_ORM_Mapper_Factory::factory('OidType');
+        $subject = &$mapper->createObject();
+        $subject->name = 'Foo';
+        $subject->picture = &$mapper->createLOB("file://$jpegPath");
+
+        Piece_ORM_Error::disableCallback();
+        $mapper->insert($subject);
+        Piece_ORM_Error::enableCallback();
+
+        $this->assertTrue(Piece_ORM_Error::hasErrors());
+
+        $error = Piece_ORM_Error::pop();
+
+        $this->assertEquals(PIECE_ORM_ERROR_CANNOT_INVOKE, $error['code']);
+    }
+
     /**#@-*/
 
     /**#@+

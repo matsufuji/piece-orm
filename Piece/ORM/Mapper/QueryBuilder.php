@@ -346,11 +346,34 @@ class Piece_ORM_Mapper_QueryBuilder
                         $source = $matches[1];
                     }
 
-                    $dbh->beginTransaction();
+                    PEAR::staticPushErrorHandling(PEAR_ERROR_RETURN);
+                    $result = $dbh->beginTransaction();
+                    PEAR::staticPopErrorHandling();
+                    if (MDB2::isError($result)) {
+                        Piece_ORM_Error::pushPEARError($result,
+                                                       PIECE_ORM_ERROR_CANNOT_INVOKE,
+                                                       "Failed to invoke MDB2_Driver_{$dbh->phptype}::beginTransaction() for any reasons."
+                                                       );
+                        return;
+                    }
                     $value = pg_lo_import($dbh->connection,
                                           $source
                                           );
-                    $dbh->commit();
+                    if ($value === false) {
+                        Piece_ORM_Error::push(PIECE_ORM_ERROR_CANNOT_INVOKE,
+                                              'Failed to invoke pg_lo_import() : ' . pg_last_error($dbh->connection)
+                                              );
+                    }
+                    PEAR::staticPushErrorHandling(PEAR_ERROR_RETURN);
+                    $result = $dbh->commit();
+                    PEAR::staticPopErrorHandling();
+                    if (MDB2::isError($result)) {
+                        Piece_ORM_Error::pushPEARError($result,
+                                                       PIECE_ORM_ERROR_CANNOT_INVOKE,
+                                                       "Failed to invoke MDB2_Driver_{$dbh->phptype}::commit() for any reasons."
+                                                       );
+                        return;
+                    }
                     break;
                 }
 

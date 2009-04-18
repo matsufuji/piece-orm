@@ -214,14 +214,29 @@ class Piece_ORM_Mapper_LOB
      * Loads the LOB data of PostgreSQL OID.
      *
      * @return string
+     * @throws PIECE_ORM_ERROR_CANNOT_INVOKE
      */
     function _loadOID()
     {
-        $this->_dbh->beginTransaction();
+        PEAR::staticPushErrorHandling(PEAR_ERROR_RETURN);
+        $result = $this->_dbh->beginTransaction();
+        PEAR::staticPopErrorHandling();
+        if (MDB2::isError($result)) {
+            Piece_ORM_Error::pushPEARError($result,
+                                           PIECE_ORM_ERROR_CANNOT_INVOKE,
+                                           "Failed to invoke MDB2_Driver_{$this->_dbh->phptype}::beginTransaction() for any reasons."
+                                           );
+            return;
+        }
         $handle = pg_lo_open($this->_dbh->connection,
                              $this->_value,
                              "r"
                              );
+        if ($handle === false) {
+            Piece_ORM_Error::push(PIECE_ORM_ERROR_CANNOT_INVOKE,
+                                  'Failed to invoke pg_lo_open() : ' . pg_last_error($dbh->connection)
+                                  );
+        }
         $data = '';
         while (true) {
             $result = pg_lo_read($handle, 8192);
@@ -231,7 +246,16 @@ class Piece_ORM_Mapper_LOB
             $data .= $result;
         }
         pg_lo_close($handle);
-        $this->_dbh->commit();
+        PEAR::staticPushErrorHandling(PEAR_ERROR_RETURN);
+        $result = $this->_dbh->commit();
+        PEAR::staticPopErrorHandling();
+        if (MDB2::isError($result)) {
+            Piece_ORM_Error::pushPEARError($result,
+                                           PIECE_ORM_ERROR_CANNOT_INVOKE,
+                                           "Failed to invoke MDB2_Driver_{$this->_dbh->phptype}::commit() for any reasons."
+                                           );
+            return;
+        }
 
         return $data;
     }
